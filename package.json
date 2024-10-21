@@ -1,0 +1,35 @@
+{
+  "name": "physical-store",
+  "version": "1.0.0",
+  "description": "Repositório dedicado ao treinamento de um projeto envolvendo JavaScript/TypeScript;",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lucasvictoor/Physical-Store.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lucasvictoor/Physical-Store/issues"
+  },
+  "homepage": "https://github.com/lucasvictoor/Physical-Store#readme",
+  "dependencies": {
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "mongoose": "^8.7.2",
+    "nodemon": "^3.1.7",
+    "winston": "^3.15.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/mongoose": "^5.11.97",
+    "@types/node": "^22.7.7",
+    "@types/winston": "^2.4.4",
+    "typescript": "^5.6.3"
+  }
+}
