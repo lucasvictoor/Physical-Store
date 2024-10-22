@@ -2,9 +2,10 @@
   "name": "physical-store",
   "version": "1.0.0",
   "description": "Repositório dedicado ao treinamento de um projeto envolvendo JavaScript/TypeScript;",
-  "main": "index.js",
+  "main": "app.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon ./app.ts localhost 5000"
   },
   "repository": {
     "type": "git",
@@ -30,6 +31,7 @@
     "@types/mongoose": "^5.11.97",
     "@types/node": "^22.7.7",
     "@types/winston": "^2.4.4",
+    "ts-node": "^10.9.2",
     "typescript": "^5.6.3"
   }
 }
