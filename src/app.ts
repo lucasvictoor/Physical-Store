@@ -1,6 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import connectDB from '../db/conn';
+import connectDB from './db/conn';
 
 dotenv.config();
 

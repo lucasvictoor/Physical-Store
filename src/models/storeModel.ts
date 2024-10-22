@@ -1,0 +1,1 @@
+// Model para as lojas físicas
