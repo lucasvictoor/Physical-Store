@@ -56,3 +56,19 @@ export const deleteStore = async (req: Request, res: Response) => {
       return res.status(500).json({ message: 'Erro ao deletar loja', error: error.message });
     }
   };  
+
+// Função para obter uma loja específica
+export const getStoreById = async (req: Request, res: Response) => {
+    const { id } = req.params;
+  
+    try {
+      const store = await Store.findById(id);
+      if (!store) {
+        return res.status(404).json({ message: 'Loja não encontrada' });
+      }
+      return res.status(200).json(store);
+    } catch (error: any) {
+      logger.error(`Erro ao obter loja: ${error.message}`);
+      return res.status(500).json({ message: 'Erro ao obter loja', error: error.message });
+    }
+  };  

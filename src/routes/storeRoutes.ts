@@ -1,6 +1,6 @@
 // Rotas relacionadas às lojas físicas
 import { Router } from 'express';
-import { createStore, getStores, deleteStore } from '../controllers/storeController';
+import { createStore, getStores, deleteStore, getStoreById } from '../controllers/storeController';
 
 const router = Router();
 
@@ -10,5 +10,7 @@ router.post('/', createStore);
 router.get('/', getStores);
 // Rota para deletar uma loja por ID
 router.delete('/:id', deleteStore);
+// Rota para obter uma loja por ID
+router.get('/:id', getStoreById);
 
 export default router;
