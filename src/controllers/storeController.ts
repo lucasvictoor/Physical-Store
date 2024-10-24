@@ -40,3 +40,19 @@ export const getStores = async (req: Request, res: Response) => {
       return res.status(500).json({ message: 'Erro ao obter lojas', error: error.message });
     }
   };  
+
+// Função para deletar
+export const deleteStore = async (req: Request, res: Response) => {
+    const { id } = req.params;
+  
+    try {
+      const store = await Store.findByIdAndDelete(id);
+      if (!store) {
+        return res.status(404).json({ message: 'Loja não encontrada' });
+      }
+      return res.status(200).json({ message: 'Loja deletada com sucesso' });
+    } catch (error: any) {
+      logger.error(`Erro ao deletar loja: ${error.message}`);
+      return res.status(500).json({ message: 'Erro ao deletar loja', error: error.message });
+    }
+  };  
