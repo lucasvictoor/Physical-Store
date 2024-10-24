@@ -29,3 +29,14 @@ export const createStore = async (req: Request, res: Response) => {
     return res.status(500).json({ message: 'Erro ao criar loja.', error: error.message });  // Retorna erro
   }
 };
+
+// Função para mostrar todas as lojas cadastradas
+export const getStores = async (req: Request, res: Response) => {
+    try {
+      const stores = await Store.find();
+      return res.status(200).json(stores);
+    } catch (error: any) {
+      logger.error(`Erro ao obter lojas: ${error.message}`);
+      return res.status(500).json({ message: 'Erro ao obter lojas', error: error.message });
+    }
+  };  
