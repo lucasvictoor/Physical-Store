@@ -13,6 +13,6 @@ router.delete('/:id', deleteStore);
 // Rota para obter uma loja por ID
 router.get('/:id', getStoreById);
 // Rota para buscar lojas próximas
-router.post('/stores/buscar-lojas', buscarLojasProximas);
+router.post('/buscar-lojas', buscarLojasProximas);
 
 export default router;

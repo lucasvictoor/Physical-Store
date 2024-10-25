@@ -4,32 +4,34 @@ import Store from '../models/storeModel';
 import logger from '../utils/logger';
 import { obterCoordenadasPorCep } from '../utils/obterCoordenadas';
 import { calcularDistancia } from '../utils/conv-distance';
+import { buscarEnderecoPorCep } from '../utils/viacep';
 
-// Função para criar uma loja
-export const createStore = async (req: Request, res: Response) => {
+export const createStore = async (req: Request, res: Response): Promise<Response> => {
   const { name, address } = req.body;
-  const { street, city, state, postalCode, number } = address;
+  const { postalCode, number } = address;
 
   try {
-    // Criar uma nova loja diretamente com as informações fornecidas
+    const enderecoViacep = await buscarEnderecoPorCep(postalCode);
+    const coordenadas = await obterCoordenadasPorCep(postalCode);
+
+    const fullAddress = {
+      ...enderecoViacep,
+      number: number,
+      latitude: coordenadas.latitude,
+      longitude: coordenadas.longitude,
+    };
+
     const newStore = new Store({
       name: name,
-      address: {
-        street,
-        city,
-        state,
-        postalCode,
-        number
-      }
+      address: fullAddress,
     });
 
-    // Salva a loja no banco de dados
     await newStore.save();
-    logger.info(`Loja criada com sucesso: ${newStore._id}`); // Adicionado log de sucesso
-    return res.status(201).json(newStore);  // Retorna a loja criada
+    logger.info(`Loja criada com sucesso: ${newStore._id}`);
+    return res.status(201).json(newStore);
   } catch (error: any) {
     logger.error(`Erro ao criar loja: ${error.message}`);
-    return res.status(500).json({ message: 'Erro ao criar loja.', error: error.message });  // Retorna erro
+    return res.status(400).json({ message: 'Erro ao criar loja', error: error.message });
   }
 };
 
@@ -82,23 +84,22 @@ export const getStoreById = async (req: Request, res: Response) => {
 };
 
 // Função para buscar lojas próximas
-// Função para buscar lojas próximas
 export const buscarLojasProximas = async (req: Request, res: Response) => {
   const { postalCode } = req.body;
 
   try {
-    // Obtém as coordenadas do usuário a partir do CEP fornecido
     const userCoordinates = await obterCoordenadasPorCep(postalCode);
     const { latitude: userLat, longitude: userLon } = userCoordinates;
 
-    // Busca todas as lojas no banco de dados
     const stores = await Store.find();
     const nearbyStores = [];
 
     for (const store of stores) {
-      const { latitude: storeLat, longitude: storeLon } = store.address;
+      const { latitude: storeLat, longitude: storeLon } = store.address as {
+        latitude: number;
+        longitude: number;
+      };
 
-      // Calcula a distância entre o usuário e a loja
       const distance = calcularDistancia(userLat, userLon, storeLat, storeLon);
 
       // Se a loja estiver dentro do raio de 100 km, adiciona à lista
