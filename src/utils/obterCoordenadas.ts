@@ -1,4 +1,4 @@
-// Função para converter cep em coordenadas usando a API OpenCage;
+// Função para converter cep em coordenadas usando a API OpenCage
 import axios from 'axios';
 
 export const obterCoordenadasPorCep = async (cep: string) => {
