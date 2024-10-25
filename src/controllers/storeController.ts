@@ -88,6 +88,13 @@ export const buscarLojasProximas = async (req: Request, res: Response) => {
   const { postalCode } = req.body;
 
   try {
+    // Verificar se o CEP é válido
+    const enderecoViacep = await buscarEnderecoPorCep(postalCode);
+
+    if (!enderecoViacep) {
+      return res.status(400).json({ message: 'CEP inválido ou não encontrado.' });
+    }
+
     const userCoordinates = await obterCoordenadasPorCep(postalCode);
     const { latitude: userLat, longitude: userLon } = userCoordinates;
 
