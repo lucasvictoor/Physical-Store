@@ -13,8 +13,8 @@ export const buscarEnderecoPorCep = async (cep: string) => {
 
     // Retorna os dados do endereço
     return {
-      street: response.data.logradouro,
-      neighborhood: response.data.bairro,
+      street: response.data.logradouro || 'Endereço não informado', // Adicionado caso viaCEP não encontre um endereço
+      neighborhood: response.data.bairro || 'Bairro não informado',
       city: response.data.localidade,
       state: response.data.uf,
       postalCode: response.data.cep,
