@@ -2,6 +2,8 @@
 import { Request, Response } from 'express';
 import Store from '../models/storeModel';
 import logger from '../utils/logger';
+import { obterCoordenadasPorCep } from '../utils/obterCoordenadas';
+import { calcularDistancia } from '../utils/conv-distance';
 
 // Função para criar uma loja
 export const createStore = async (req: Request, res: Response) => {
@@ -41,7 +43,7 @@ export const getStores = async (req: Request, res: Response) => {
       logger.error(`Erro ao obter lojas: ${error.message}`);
       return res.status(500).json({ message: 'Erro ao obter lojas', error: error.message });
     }
-  };  
+};  
 
 // Função para deletar
 export const deleteStore = async (req: Request, res: Response) => {
@@ -59,7 +61,7 @@ export const deleteStore = async (req: Request, res: Response) => {
       logger.error(`Erro ao deletar loja: ${error.message}`);
       return res.status(500).json({ message: 'Erro ao deletar loja', error: error.message });
     }
-  };  
+};  
 
 // Função para obter uma loja específica
 export const getStoreById = async (req: Request, res: Response) => {
@@ -77,4 +79,44 @@ export const getStoreById = async (req: Request, res: Response) => {
       logger.error(`Erro ao obter loja: ${error.message}`);
       return res.status(500).json({ message: 'Erro ao obter loja', error: error.message });
     }
-  };  
+};
+
+// Função para buscar lojas próximas
+// Função para buscar lojas próximas
+export const buscarLojasProximas = async (req: Request, res: Response) => {
+  const { postalCode } = req.body;
+
+  try {
+    // Obtém as coordenadas do usuário a partir do CEP fornecido
+    const userCoordinates = await obterCoordenadasPorCep(postalCode);
+    const { latitude: userLat, longitude: userLon } = userCoordinates;
+
+    // Busca todas as lojas no banco de dados
+    const stores = await Store.find();
+    const nearbyStores = [];
+
+    for (const store of stores) {
+      const { latitude: storeLat, longitude: storeLon } = store.address;
+
+      // Calcula a distância entre o usuário e a loja
+      const distance = calcularDistancia(userLat, userLon, storeLat, storeLon);
+
+      // Se a loja estiver dentro do raio de 100 km, adiciona à lista
+      if (distance <= 100) {
+        nearbyStores.push({ store, distance });
+      }
+    }
+
+    // Ordena as lojas pela distância (mais próxima primeiro)
+    nearbyStores.sort((a, b) => a.distance - b.distance);
+
+    if (nearbyStores.length > 0) {
+      return res.status(200).json(nearbyStores);
+    } else {
+      return res.status(404).json({ message: 'Nenhuma loja encontrada em um raio de 100 km.' });
+    }
+  } catch (error: any) {
+    logger.error(`Erro ao buscar lojas próximas: ${error.message}`);
+    return res.status(500).json({ message: 'Erro ao buscar lojas próximas.' });
+  }
+};

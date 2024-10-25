@@ -28,6 +28,14 @@ const storeSchema = new mongoose.Schema({
     number: {
       type: String,
       required: [true, 'O número é obrigatório'],
+    },
+    latitude: {
+      type: Number,
+      required: true,
+    },
+    longitude: {
+      type: Number,
+      required: true,
     }
   }
 });
