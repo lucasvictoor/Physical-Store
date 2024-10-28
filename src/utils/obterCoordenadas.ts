@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export const obterCoordenadasPorCep = async (cep: string) => {
   try {
-    const apiKey = 'AIzaSyA42VzqLvf7RMb0B2s9Y_YHFc6Qnvq9h08';
+    const apiKey = process.env.GOOGLE_API_KEY;
     const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json`, {
       params: {
         address: cep,
