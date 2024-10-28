@@ -1,21 +1,22 @@
-// Função para converter cep em coordenadas usando a API OpenCage
 import axios from 'axios';
 
 export const obterCoordenadasPorCep = async (cep: string) => {
   try {
-    const apiKey = '0e109e0f72514d0ba6116af6b4e95d85'; // Sua chave da API OpenCage
-    const response = await axios.get(`https://api.opencagedata.com/geocode/v1/json`, {
+    const apiKey = 'AIzaSyA42VzqLvf7RMb0B2s9Y_YHFc6Qnvq9h08';
+    const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json`, {
       params: {
-        q: cep,
+        address: cep,
         key: apiKey,
+        region: 'br'
       },
     });
 
-    if (response.data.results.length === 0) {
+    if (response.data.status !== 'OK' || response.data.results.length === 0) {
       throw new Error('CEP inválido ou não encontrado.');
     }
 
-    const location = response.data.results[0].geometry;
+    const location = response.data.results[0].geometry.location;
+    console.log(`Coordenadas para CEP ${cep}: Latitude ${location.lat}, Longitude ${location.lng}`);
     return {
       latitude: location.lat,
       longitude: location.lng,
