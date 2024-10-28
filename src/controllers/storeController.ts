@@ -8,11 +8,31 @@ import { buscarEnderecoPorCep } from '../utils/viacep';
 
 export const createStore = async (req: Request, res: Response): Promise<Response> => {
   const { name, address } = req.body;
-  const { postalCode, number } = address;
+  const { postalCode, number, street, city, state } = address;
 
   try {
-    const enderecoViacep = await buscarEnderecoPorCep(postalCode);
-    const coordenadas = await obterCoordenadasPorCep(postalCode);
+    // Primeiro, tentamos obter o endereço completo e as coordenadas pelo CEP
+    let enderecoViacep;
+    let coordenadas;
+
+    try {
+      enderecoViacep = await buscarEnderecoPorCep(postalCode);
+      coordenadas = await obterCoordenadasPorCep(postalCode);
+    } catch (error) {
+      // Caso o CEP não seja encontrado, tentamos usar o nome da rua, cidade e estado para buscar as coordenadas
+      if (street && city && state) {
+        logger.info('CEP não encontrado, tentando buscar com endereço completo.');
+        
+        const fullAddress = `${street}, ${city}, ${state}`;
+        coordenadas = await obterCoordenadasPorCep(fullAddress);
+        
+        enderecoViacep = { street, city, state, postalCode: postalCode || 'Não especificado' };
+      } else {
+        return res.status(400).json({
+          message: 'CEP não encontrado. Por favor, forneça o nome da rua, cidade e estado.'
+        });
+      }
+    }
 
     const fullAddress = {
       ...enderecoViacep,
@@ -88,38 +108,42 @@ export const buscarLojasProximas = async (req: Request, res: Response) => {
   const { postalCode } = req.body;
 
   try {
-    // Verificar se o CEP é válido
-    const enderecoViacep = await buscarEnderecoPorCep(postalCode);
+    // Obter coordenadas do CEP do usuário
+    const userCoordinates = await obterCoordenadasPorCep(postalCode);
 
-    if (!enderecoViacep) {
+    if (!userCoordinates) {
       return res.status(400).json({ message: 'CEP inválido ou não encontrado.' });
     }
 
-    const userCoordinates = await obterCoordenadasPorCep(postalCode);
     const { latitude: userLat, longitude: userLon } = userCoordinates;
+    logger.info(`Coordenadas do usuário - Latitude: ${userLat}, Longitude: ${userLon}`);
 
+    // Buscar todas as lojas cadastradas
     const stores = await Store.find();
-    const nearbyStores = [];
 
-    for (const store of stores) {
+    const nearbyStores = stores.map((store) => {
       const { latitude: storeLat, longitude: storeLon } = store.address as {
         latitude: number;
         longitude: number;
       };
 
+      // Log para verificar as coordenadas das lojas
+      logger.info(`Loja: ${store.name}, Latitude: ${storeLat}, Longitude: ${storeLon}`);
+
+      // Calculo da distancia usando lei dos cossenos
       const distance = calcularDistancia(userLat, userLon, storeLat, storeLon);
 
-      // Se a loja estiver dentro do raio de 100 km, adiciona à lista
-      if (distance <= 100) {
-        nearbyStores.push({ store, distance });
-      }
-    }
+      return { store, distance };
+    });
 
-    // Ordena as lojas pela distância (mais próxima primeiro)
-    nearbyStores.sort((a, b) => a.distance - b.distance);
+    // Filtrar lojas dentro de 100 km
+    const filteredStores = nearbyStores.filter(({ distance }) => distance <= 100);
 
-    if (nearbyStores.length > 0) {
-      return res.status(200).json(nearbyStores);
+    // Ordenar lojas por distância (mais próximas primeiro)
+    filteredStores.sort((a, b) => a.distance - b.distance);
+
+    if (filteredStores.length > 0) {
+      return res.status(200).json(filteredStores);
     } else {
       return res.status(404).json({ message: 'Nenhuma loja encontrada em um raio de 100 km.' });
     }
