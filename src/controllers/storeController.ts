@@ -120,9 +120,7 @@ export const buscarLojasProximas = async (req: Request, res: Response) => {
   const { postalCode } = req.body;
 
   try {
-    // Obter coordenadas do CEP do usuário
     const userCoordinates = await obterCoordenadasPorCep(postalCode);
-
     if (!userCoordinates) {
       return res.status(400).json({ message: 'CEP inválido ou não encontrado.' });
     }
@@ -130,32 +128,27 @@ export const buscarLojasProximas = async (req: Request, res: Response) => {
     const { latitude: userLat, longitude: userLon } = userCoordinates;
     logger.info(`Coordenadas do usuário - Latitude: ${userLat}, Longitude: ${userLon}`);
 
-    // Buscar todas as lojas cadastradas
     const stores = await Store.find();
+    const nearbyStores = stores
+      .map((store) => {
+        const { latitude: storeLat, longitude: storeLon } = store.address as {
+          latitude: number;
+          longitude: number;
+        };
 
-    const nearbyStores = stores.map((store) => {
-      const { latitude: storeLat, longitude: storeLon } = store.address as {
-        latitude: number;
-        longitude: number;
-      };
+        const distance = calcularDistancia(userLat, userLon, storeLat, storeLon);
+        logger.info(`Loja: ${store.name}, Distância: ${distance.toFixed(2)} Km`);
 
-      // Log para verificar as coordenadas das lojas
-      logger.info(`Loja: ${store.name}, Latitude: ${storeLat}, Longitude: ${storeLon}`);
+        return { store, distance: `${distance.toFixed(2)} Km` };
+      })
+      .filter(({ distance }) => parseFloat(distance) <= 100) // Filtrar lojas dentro de 100 km
+      .sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance)); // Ordenar por proximidade
 
-      // Calculo da distancia usando lei dos cossenos
-      const distance = calcularDistancia(userLat, userLon, storeLat, storeLon);
-
-      return { store, distance };
-    });
-
-    // Filtrar lojas dentro de 100 km
-    const filteredStores = nearbyStores.filter(({ distance }) => distance <= 100);
-
-    // Ordenar lojas por distância (mais próximas primeiro)
-    filteredStores.sort((a, b) => a.distance - b.distance);
-
-    if (filteredStores.length > 0) {
-      return res.status(200).json(filteredStores);
+    if (nearbyStores.length > 0) {
+      return res.status(200).json({
+        message: `${nearbyStores.length} lojas encontradas a menos de 100km do CEP fornecido`,
+        stores: nearbyStores,
+      });
     } else {
       return res.status(404).json({ message: 'Nenhuma loja encontrada em um raio de 100 km.' });
     }
