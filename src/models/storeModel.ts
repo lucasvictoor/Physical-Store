@@ -40,5 +40,13 @@ const storeSchema = new mongoose.Schema({
   }
 });
 
+// Configuração para remover o campo __v na resposta JSON
+storeSchema.set('toJSON', {
+  transform: (doc, ret) => {
+    delete ret.__v;
+    return ret;
+  }
+});
+
 const Store = mongoose.model('Store', storeSchema);
 export default Store;
