@@ -25,11 +25,16 @@ export const createStore = async (req: Request, res: Response): Promise<Response
     try {
       enderecoViacep = await buscarEnderecoPorCep(postalCode);
       coordenadas = await obterCoordenadasPorCep(postalCode);
+
+      // Verificação se endereço está completo ou não
+      if (!enderecoViacep.street || !enderecoViacep.city || !enderecoViacep.state) {
+        throw new Error('Endereço incompleto.');
+      }
+
     } catch (error) {
       // Caso o CEP não seja encontrado, tentamos usar o nome da rua, cidade e estado para buscar as coordenadas
       if (street && city && state) {
         logger.info('CEP não encontrado, tentando buscar com endereço completo.');
-        
         const fullAddress = `${street}, ${city}, ${state}`;
         coordenadas = await obterCoordenadasPorCep(fullAddress);
         
