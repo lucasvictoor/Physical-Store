@@ -11,6 +11,13 @@ export const createStore = async (req: Request, res: Response): Promise<Response
   const { postalCode, number, street, city, state } = address;
 
   try {
+    // Verificação se já existe uma loja com o mesmo CEP
+    const existingStore = await Store.findOne({ "address.postalCode": postalCode });
+    if(existingStore){
+      logger.warn(`Tentativa de criação de loja bloqueada: CEP ${postalCode} já está cadastrado para outra loja.`);
+      return res.status(400).json({ message: 'Já existe uma loja cadastrada com esse CEP.'});
+    }
+
     // Primeiro, tentamos obter o endereço completo e as coordenadas pelo CEP
     let enderecoViacep;
     let coordenadas;
@@ -18,11 +25,16 @@ export const createStore = async (req: Request, res: Response): Promise<Response
     try {
       enderecoViacep = await buscarEnderecoPorCep(postalCode);
       coordenadas = await obterCoordenadasPorCep(postalCode);
+
+      // Verificação se endereço está completo ou não
+      if (!enderecoViacep.street || !enderecoViacep.city || !enderecoViacep.state) {
+        throw new Error('Endereço incompleto.');
+      }
+
     } catch (error) {
       // Caso o CEP não seja encontrado, tentamos usar o nome da rua, cidade e estado para buscar as coordenadas
       if (street && city && state) {
         logger.info('CEP não encontrado, tentando buscar com endereço completo.');
-        
         const fullAddress = `${street}, ${city}, ${state}`;
         coordenadas = await obterCoordenadasPorCep(fullAddress);
         
