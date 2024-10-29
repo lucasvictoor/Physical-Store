@@ -11,6 +11,13 @@ export const createStore = async (req: Request, res: Response): Promise<Response
   const { postalCode, number, street, city, state } = address;
 
   try {
+    // Verificação se já existe uma loja com o mesmo CEP
+    const existingStore = await Store.findOne({ "address.postalCode": postalCode });
+    if(existingStore){
+      logger.warn(`Tentativa de criação de loja bloqueada: CEP ${postalCode} já está cadastrado para outra loja.`);
+      return res.status(400).json({ message: 'Já existe uma loja cadastrada com esse CEP.'});
+    }
+
     // Primeiro, tentamos obter o endereço completo e as coordenadas pelo CEP
     let enderecoViacep;
     let coordenadas;
