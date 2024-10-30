@@ -6,6 +6,7 @@ import { obterCoordenadasPorCep } from '../utils/obterCoordenadas';
 import { calcularDistancia } from '../utils/conv-distance';
 import { buscarEnderecoPorCep } from '../utils/viacep';
 
+// Função para criar uma loja
 export const createStore = async (req: Request, res: Response): Promise<Response> => {
   const { name, address } = req.body;
   const { postalCode, number, street, city, state } = address;
@@ -32,7 +33,7 @@ export const createStore = async (req: Request, res: Response): Promise<Response
       }
 
     } catch (error) {
-      // Caso o CEP não seja encontrado, tentamos usar o nome da rua, cidade e estado para buscar as coordenadas
+      // Caso o CEP não seja encontrado, utiliza nome da rua, cidade e estado
       if (street && city && state) {
         logger.info('CEP não encontrado, tentando buscar com endereço completo.');
         const fullAddress = `${street}, ${city}, ${state}`;
@@ -71,7 +72,7 @@ export const createStore = async (req: Request, res: Response): Promise<Response
 export const getStores = async (req: Request, res: Response) => {
     try {
       const stores = await Store.find();
-      logger.info(`Listagem de todas as lojas. Total: ${stores.length}`); // Adicionado log
+      logger.info(`Listagem de todas as lojas. Total: ${stores.length}`);
       return res.status(200).json(stores);
     } catch (error: any) {
       logger.error(`Erro ao obter lojas: ${error.message}`);
@@ -79,14 +80,14 @@ export const getStores = async (req: Request, res: Response) => {
     }
 };  
 
-// Função para deletar
+// Função para deletar uma loja pelo ID
 export const deleteStore = async (req: Request, res: Response) => {
     const { id } = req.params;
   
     try {
       const store = await Store.findByIdAndDelete(id);
       if (!store) {
-        logger.warn(`Tentativa de deletar loja não existente: ${id}`); // Aviso de log
+        logger.warn(`Tentativa de deletar loja não existente: ${id}`);
         return res.status(404).json({ message: 'Loja não encontrada' });
       }
       logger.info(`Loja deletada com sucesso: ${id}`);
@@ -97,14 +98,14 @@ export const deleteStore = async (req: Request, res: Response) => {
     }
 };  
 
-// Função para obter uma loja específica
+// Função para obter uma loja específica pelo ID
 export const getStoreById = async (req: Request, res: Response) => {
     const { id } = req.params;
   
     try {
       const store = await Store.findById(id);
       if (!store) {
-        logger.warn(`Loja não encontrada: ${id}`); // Aviso de loja não encontrada
+        logger.warn(`Loja não encontrada: ${id}`);
         return res.status(404).json({ message: 'Loja não encontrada' });
       }
       logger.info(`Loja encontrada: ${id}`);
@@ -115,7 +116,7 @@ export const getStoreById = async (req: Request, res: Response) => {
     }
 };
 
-// Função para buscar lojas próximas
+// Função para buscar lojas próximas a um CEP dentro do raio de 100KM
 export const buscarLojasProximas = async (req: Request, res: Response) => {
   const { postalCode } = req.body;
 
@@ -130,7 +131,7 @@ export const buscarLojasProximas = async (req: Request, res: Response) => {
 
     const stores = await Store.find();
     const nearbyStores = stores
-      .map((store) => {
+      .map((store) => { // Map é responsável por iterar sobre todas as lojas
         const { latitude: storeLat, longitude: storeLon } = store.address as {
           latitude: number;
           longitude: number;

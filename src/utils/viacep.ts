@@ -1,6 +1,6 @@
-// Utilitário para a chamada da ViaCEP, onde vamos poder chamar essa função em qualquer outro arquivo
 import axios from 'axios';
 
+// Função para buscar o endereço através da API ViaCEP
 export const buscarEnderecoPorCep = async (cep: string) => {
   try {
     // Chama a API ViaCEP com o CEP fornecido

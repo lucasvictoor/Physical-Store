@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+// Função utilizando a API do Google Geocoding para obtenção de coordenadas
 export const obterCoordenadasPorCep = async (cep: string) => {
   try {
     const apiKey = process.env.GOOGLE_API_KEY;
@@ -15,6 +16,7 @@ export const obterCoordenadasPorCep = async (cep: string) => {
       throw new Error('CEP inválido ou não encontrado.');
     }
 
+    // Extração das coordenadas da resposta da API
     const location = response.data.results[0].geometry.location;
     console.log(`Coordenadas para CEP ${cep}: Latitude ${location.lat}, Longitude ${location.lng}`);
     return {

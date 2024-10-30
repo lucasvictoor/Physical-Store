@@ -1,5 +1,5 @@
 export const calcularDistancia = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371; // Raio da Terra em km
+    const R = 6371; // Raio da Terra em KM
   
     // Converte as coordenadas de graus para radianos
     const lat1Rad = (lat1 * Math.PI) / 180;
@@ -13,6 +13,5 @@ export const calcularDistancia = (lat1: number, lon1: number, lat2: number, lon2
       Math.cos(lat1Rad) * Math.cos(lat2Rad) * Math.cos(lon1Rad - lon2Rad)
     ) * R;
   
-    return distancia; // Distância em km
+    return distancia;
   };
-  
