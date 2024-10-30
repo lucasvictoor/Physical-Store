@@ -28,6 +28,10 @@ const storeSchema = new mongoose.Schema({
     number: {
       type: String,
       required: [true, 'O número é obrigatório'],
+      validate: {
+        validator: (value: string) => value.trim().length > 0,
+        message: 'O número não pode ser uma string vazia.',
+      },
     },
     latitude: {
       type: Number,
