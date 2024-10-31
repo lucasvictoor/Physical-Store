@@ -147,7 +147,7 @@ export const buscarLojasProximas = async (req: Request, res: Response) => {
 
     if (nearbyStores.length > 0) {
       return res.status(200).json({
-        message: `${nearbyStores.length} lojas encontradas a menos de 100km do CEP fornecido`,
+        message: `${nearbyStores.length} loja(s) encontrada(s) a menos de 100km do CEP fornecido`,
         stores: nearbyStores,
       });
     } else {
