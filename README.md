@@ -36,8 +36,8 @@ O sistema integra-se com a API do ViaCEP para obter dados de endereço e utiliza
 * MongoDB para armazenar dados das lojas físicas, com a biblioteca Mongoose para modelagem de dados.
 
 #### Bibliotecas Adicionais
-* Axios - para chamadas HTTP às APIs externas.
-* Winston - para geração e gerenciamento de logs da aplicação.
+* Axios para chamadas HTTP às APIs externas.
+* Winston para geração e gerenciamento de logs da aplicação.
 
 ## :construction: Status do Projeto
-Em desenvolvimento.
+Concluído
