@@ -1,65 +1,83 @@
-// Controlador para as lojas físicas
-import { Request, Response } from 'express';
-import Store from '../models/storeModel';
 import logger from '../utils/logger';
-import { obterCoordenadasPorCep } from '../utils/obterCoordenadas';
-import { calcularDistancia } from '../utils/conv-distance';
+import Store from '../models/storeModel';
+import { Request, Response } from 'express';
 import { buscarEnderecoPorCep } from '../utils/viacep';
+import { calcularDistancia } from '../utils/conv-distance';
+import { obterCoordenadasPorCep } from '../utils/obterCoordenadas';
 
-// Função para criar uma loja
-export const createStore = async (req: Request, res: Response): Promise<Response> => {
-  const { name, address } = req.body;
-  const { postalCode, number, street, city, state } = address;
+// Função auxiliar para calculo de lojas próximas
+const calcularLojasProximas = async (
+  userCoordinates: { latitude: number; longitude: number },
+  maxDistance: number = 100
+) => {
+  const stores = await Store.find();
+  return stores
+    .map((store) => {
+      const { latitude: storeLat, longitude: storeLon } = store.address as {
+        latitude: number;
+        longitude: number;
+      };
+      const distance = calcularDistancia(
+        userCoordinates.latitude,
+        userCoordinates.longitude,
+        storeLat,
+        storeLon
+      );
+      return { store, distance: `${distance.toFixed(2)} km`,};
+    })
+    .filter(({ distance }) => parseFloat(distance) <= maxDistance)
+    .sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
+};
 
+// Função de validação se loja com o mesmo CEP já existe
+const verificarLojaExistente = async (postalCode: string) => {
+  const existingStore = await Store.findOne({ "address.postalCode": postalCode });
+  if (existingStore) {
+    throw new Error(`Já existe uma loja cadastrada com o CEP ${postalCode}.`);
+  }
+};
+
+// Função auxiliar para obter endereço e coordenadas
+const obterEnderecoCompleto = async (postalCode: string, address: any) => {
   try {
-    // Verificação se já existe uma loja com o mesmo CEP
-    const existingStore = await Store.findOne({ "address.postalCode": postalCode });
-    if(existingStore){
-      logger.warn(`Tentativa de criação de loja bloqueada: CEP ${postalCode} já está cadastrado para outra loja.`);
-      return res.status(400).json({ message: 'Já existe uma loja cadastrada com esse CEP.'});
-    }
-
-    // Primeiro, tentamos obter o endereço completo e as coordenadas pelo CEP
-    let enderecoViacep;
-    let coordenadas;
-
-    try {
-      enderecoViacep = await buscarEnderecoPorCep(postalCode);
-      coordenadas = await obterCoordenadasPorCep(postalCode);
-
-      // Verificação se endereço está completo ou não
-      if (!enderecoViacep.street || !enderecoViacep.city || !enderecoViacep.state) {
-        throw new Error('Endereço incompleto.');
-      }
-
-    } catch (error) {
-      // Caso o CEP não seja encontrado, utiliza nome da rua, cidade e estado
-      if (street && city && state) {
-        logger.info('CEP não encontrado, tentando buscar com endereço completo.');
-        const fullAddress = `${street}, ${city}, ${state}`;
-        coordenadas = await obterCoordenadasPorCep(fullAddress);
-        
-        enderecoViacep = { street, city, state, postalCode: postalCode || 'Não especificado' };
-      } else {
-        return res.status(400).json({
-          message: 'CEP não encontrado. Por favor, forneça o nome da rua, cidade e estado.'
-        });
-      }
-    }
-
-    const fullAddress = {
+    const enderecoViacep = await buscarEnderecoPorCep(postalCode);
+    const coordenadas = await obterCoordenadasPorCep(postalCode);
+    return {
       ...enderecoViacep,
-      number: number,
+      number: address.number,
       latitude: coordenadas.latitude,
       longitude: coordenadas.longitude,
     };
+  } catch {
+    if (address.street && address.city && address.state) {
+      const fullAddress = `${address.street}, ${address.city}, ${address.state}`;
+      const coordenadas = await obterCoordenadasPorCep(fullAddress);
+      return {
+        street: address.street,
+        city: address.city,
+        state: address.state,
+        postalCode,
+        number: address.number,
+        latitude: coordenadas.latitude,
+        longitude: coordenadas.longitude,
+      };
+    }
+    throw new Error('CEP ou endereço inválido.');
+  }
+};
 
-    const newStore = new Store({
-      name: name,
-      address: fullAddress,
-    });
+// Função para criação da loja
+export const createStore = async (req: Request, res: Response): Promise<Response> => {
+  const { name, address } = req.body;
+  const { postalCode } = address;
 
+  try {
+    await verificarLojaExistente(postalCode);
+    const fullAddress = await obterEnderecoCompleto(postalCode, address);
+
+    const newStore = new Store({ name, address: fullAddress });
     await newStore.save();
+
     logger.info(`Loja criada com sucesso: ${newStore._id}`);
     return res.status(201).json(newStore);
   } catch (error: any) {
@@ -81,7 +99,7 @@ export const getStores = async (req: Request, res: Response) => {
 };  
 
 // Função para deletar uma loja pelo ID
-export const deleteStore = async (req: Request, res: Response) => {
+export const deleteStore = async (req: Request, res: Response): Promise<Response> => {
     const { id } = req.params;
   
     try {
@@ -99,7 +117,7 @@ export const deleteStore = async (req: Request, res: Response) => {
 };  
 
 // Função para obter uma loja específica pelo ID
-export const getStoreById = async (req: Request, res: Response) => {
+export const getStoreById = async (req: Request, res: Response): Promise<Response> => {
     const { id } = req.params;
   
     try {
@@ -117,7 +135,7 @@ export const getStoreById = async (req: Request, res: Response) => {
 };
 
 // Função para buscar lojas próximas a um CEP dentro do raio de 100KM
-export const buscarLojasProximas = async (req: Request, res: Response) => {
+export const buscarLojasProximas = async (req: Request, res: Response): Promise<Response> => {
   const { postalCode } = req.body;
 
   try {
@@ -126,25 +144,7 @@ export const buscarLojasProximas = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'CEP inválido ou não encontrado.' });
     }
 
-    const { latitude: userLat, longitude: userLon } = userCoordinates;
-    logger.info(`Coordenadas do usuário - Latitude: ${userLat}, Longitude: ${userLon}`);
-
-    const stores = await Store.find();
-    const nearbyStores = stores
-      .map((store) => { // Map é responsável por iterar sobre todas as lojas
-        const { latitude: storeLat, longitude: storeLon } = store.address as {
-          latitude: number;
-          longitude: number;
-        };
-
-        const distance = calcularDistancia(userLat, userLon, storeLat, storeLon);
-        logger.info(`Loja: ${store.name}, Distância: ${distance.toFixed(2)} Km`);
-
-        return { store, distance: `${distance.toFixed(2)} Km` };
-      })
-      .filter(({ distance }) => parseFloat(distance) <= 100) // Filtrar lojas dentro de 100 km
-      .sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance)); // Ordenar por proximidade
-
+    const nearbyStores = await calcularLojasProximas(userCoordinates);
     if (nearbyStores.length > 0) {
       return res.status(200).json({
         message: `${nearbyStores.length} loja(s) encontrada(s) a menos de 100km do CEP fornecido`,
@@ -155,6 +155,6 @@ export const buscarLojasProximas = async (req: Request, res: Response) => {
     }
   } catch (error: any) {
     logger.error(`Erro ao buscar lojas próximas: ${error.message}`);
-    return res.status(500).json({ message: 'Erro ao buscar lojas próximas.' });
+    return res.status(500).json({ message: 'Erro ao buscar lojas próximas.', error: error.message });
   }
 };

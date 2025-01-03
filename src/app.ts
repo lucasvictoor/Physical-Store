@@ -1,17 +1,28 @@
-import express from 'express';
 import dotenv from 'dotenv';
 import connectDB from './db/conn';
 import logger from './utils/logger';
 import storeRoutes from './routes/storeRoutes';
+import express, { Request, Response, NextFunction } from 'express';
 
-// Carrega as váriaveis do ambiente do .env
+// Carrega as variáveis do ambiente do .env
 dotenv.config();
 
 const app = express();
-app.use(express.json());
 
-// Conexão Banco de Dados
+// Config de middlewares
+const configureMiddlewares = (app: express.Application) => {
+  app.use(express.json());
+  app.use('/api/stores', storeRoutes);
+  
+  // Middleware para erros
+  app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+    logger.error(`Erro: ${err.message}`);
+    res.status(500).json({ error: 'Algo deu errado!' });
+  });
+};
+
 connectDB();
+configureMiddlewares(app);
 
 const PORT = process.env.PORT || 4000;
 
@@ -20,11 +31,4 @@ app.listen(PORT, () => {
   logger.info(`Servidor rodando na porta ${PORT}`);
 });
 
-// Rotas para as lojas
-app.use('/api/stores', storeRoutes);
-
-// Verificação de Erro
-app.use((err: any, req: any, res: any, next: any) => {
-  logger.error(`Erro: ${err.message}`);
-  res.status(500).send('Algo deu errado!');
-});
+export default app;

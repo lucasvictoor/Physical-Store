@@ -1,5 +1,5 @@
-import winston from 'winston';
 import path from 'path';
+import winston from 'winston';
 
 // Formatação no console
 const consoleFormat = winston.format.printf(({ level, message, timestamp }) => {
@@ -21,7 +21,6 @@ const logger = winston.createLogger({
         consoleFormat
       )
     }),
-    // Saida em JSON
     new winston.transports.File({
       filename: path.join(__dirname, '../../logs/saida.log'),
       level: 'info'
