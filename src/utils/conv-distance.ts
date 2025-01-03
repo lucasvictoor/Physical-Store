@@ -2,10 +2,11 @@ export const calcularDistancia = (lat1: number, lon1: number, lat2: number, lon2
     const R = 6371; // Raio da Terra em KM
   
     // Converte as coordenadas de graus para radianos
-    const lat1Rad = (lat1 * Math.PI) / 180;
-    const lon1Rad = (lon1 * Math.PI) / 180;
-    const lat2Rad = (lat2 * Math.PI) / 180;
-    const lon2Rad = (lon2 * Math.PI) / 180;
+    const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+    const lat1Rad = toRadians(lat1);
+    const lon1Rad = toRadians(lon1);
+    const lat2Rad = toRadians(lat2);
+    const lon2Rad = toRadians(lon2);
   
     // Aplica a Lei dos Cossenos Esféricos
     const distancia = Math.acos(
